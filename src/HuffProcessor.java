@@ -1,3 +1,4 @@
+import java.util.PriorityQueue;
 
 /**
  * Although this class has a history of several years,
@@ -59,7 +60,15 @@ public class HuffProcessor {
 	 *            Buffered bit stream writing to the output file.
 	 */
 	public void decompress(BitInputStream in, BitOutputStream out){
-
+		int bits = in.readBits(BITS_PER_INT); 
+		if (bits != HUFF_TREE) {
+			throw new HuffException("Illegal header starts with" + bits); 
+		}
+		
+		HuffNode root = readTreeHeader (in); 
+		//readCompressedBits(root, in, out); 
+		out.close(); 
+		
 		while (true){
 			int val = in.readBits(BITS_PER_WORD);
 			if (val == -1) break;
@@ -67,4 +76,86 @@ public class HuffProcessor {
 		}
 		out.close();
 	}
-}
+	public HuffNode readTreeHeader(BitInputStream in) {
+		int bit = in.read(); 
+		if (bit== -1)
+		{
+			throw new HuffException ("invalid bit"); 
+			
+		}
+		if (bit==0) {
+			HuffNode left= readTreeHeader(in); 
+			HuffNode right= readTreeHeader(in); 
+			return new HuffNode(0, 0, left, right); 
+		}
+		else { 
+			
+			int value= in.readBits(BITS_PER_WORD + 1); 
+			return new HuffNode(value, 0, null, null); 
+		
+		}
+	}
+	public void readCompressedBits(HuffNode root, BitInputStream in, BitOutputStream out) {
+		
+		HuffNode current= root; 
+		while (true) {
+			int bits=in.readBits(1); 
+			if (bits==-1) {
+				throw new HuffException ("bad input, no PSEUDO_EDF"); 
+			}
+			else {
+				if (bits==0) {
+					current = current.myLeft; 
+				}
+				else {
+					current= current.myRight; 
+				}
+				if (current != null && current.myRight== null && current.myLeft==null) {  //maybe need to fix 
+					if (current.myValue== PSEUDO_EOF) {
+						break; 
+					}
+					else {
+						out.write(current.myValue);
+						current= root; 
+					}
+				}
+			}
+		}
+	}
+	public int [] readForCounts(BitInputStream in) {
+		int [] freqs= new int[ALPH_SIZE + 1]; 
+		while (true) {
+			int val= in.readBits(BITS_PER_WORD); 
+			if (val==-1) {
+				freqs[PSEUDO_EOF]= 1; 
+				break; 
+			}
+			else {
+				freqs[val]++; 
+			}
+		}
+		return freqs; 
+		
+	}
+	public HuffNode makeTreeFromCounts (int [] freqs) {
+		PriorityQueue<HuffNode> pq = new PriorityQueue<>(); 
+		
+		for (int i=0; i<freqs.length; i++)
+		{
+			if (freqs[i] > 0)
+			{ 
+				pq.add(new HuffNode(i, freqs[i])); 
+			}
+		}
+		//add pseudo eof character to q
+		while (pq.size() > 1) {
+				HuffNode left= pq.remove(); 
+				HuffNode right= pq.remove();
+				HuffNode t= new HuffNode (-1, (left.myWeight+right.myWeight), left, right); 
+				pq.add(t); 
+		
+	}
+		return pq.remove(); 
+	
+	}
+} 
