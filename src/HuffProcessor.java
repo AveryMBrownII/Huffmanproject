@@ -22,7 +22,7 @@ public class HuffProcessor
     public static final int HUFF_TREE = HUFF_NUMBER | 1;
     public static final int DEBUG_HIGH = 4;
     public static final int DEBUG_LOW = 1;
-    public final int myDebugLevel;
+    private final int myDebugLevel;
     
     public HuffProcessor()
     {
