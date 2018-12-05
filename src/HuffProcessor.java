@@ -14,15 +14,15 @@ import java.util.PriorityQueue;
 public class HuffProcessor
 {
     
-    private static final int BITS_PER_WORD = 8;
-    private static final int BITS_PER_INT = 32;
-    private static final int ALPH_SIZE = (1 << BITS_PER_WORD);
-    private static final int PSEUDO_EOF = ALPH_SIZE;
-    private static final int HUFF_NUMBER = 0xface8200;
-    private static final int HUFF_TREE = HUFF_NUMBER | 1;
-    private static final int DEBUG_HIGH = 4;
-    private static final int DEBUG_LOW = 1;
-    private final int myDebugLevel;
+    public static final int BITS_PER_WORD = 8;
+    public static final int BITS_PER_INT = 32;
+    public static final int ALPH_SIZE = (1 << BITS_PER_WORD);
+    public static final int PSEUDO_EOF = ALPH_SIZE;
+    public static final int HUFF_NUMBER = 0xface8200;
+    public static final int HUFF_TREE = HUFF_NUMBER | 1;
+    public static final int DEBUG_HIGH = 4;
+    public static final int DEBUG_LOW = 1;
+    public final int myDebugLevel;
     
     public HuffProcessor()
     {
