@@ -23,7 +23,6 @@ public class HuffProcessor
     public static final int DEBUG_HIGH = 4;
     public static final int DEBUG_LOW = 1;
     private final int myDebugLevel;
-    private String[] encodings;
     
     public HuffProcessor()
     {
@@ -43,19 +42,12 @@ public class HuffProcessor
      */
     public void compress(BitInputStream in, BitOutputStream out)
     {
- //   	while (true){
- //   		int val = in.readBits(BITS_PER_WORD);
- //   		if (val == -1) break;
-//    		out.writeBits(BITS_PER_WORD, val);
- //   		}
-//    		out.close();
         int[] freqs = readForCounts(in);
         HuffNode tree = makeTreeFromCounts(freqs);
-        makeCodingsFromTree(tree);
-       
+        String[] encodings = makeCodingsFromTree(tree);
+        out.writeBits(BITS_PER_INT, HUFF_TREE);
         writeHeader(tree, out);
-        writeCompressedBits(in, out);
-        
+        writeCompressedBits(encodings, in, out);
         out.close();
     }
     
@@ -91,21 +83,19 @@ public class HuffProcessor
             }
         }
         
-        // add one instance of PSEUDO_EOF char
-        pq.add(new HuffNode(PSEUDO_EOF, 1, null, null));
-        
         while (pq.size() > 1)
         {
             HuffNode left = pq.remove();
             HuffNode right = pq.remove();
-            HuffNode t = new HuffNode(-1, left.myWeight + right.myWeight, left, right);
+            HuffNode t = new HuffNode(left.myValue + right.myValue, left.myWeight + right.myWeight,
+                    left, right);
             pq.add(t);
         }
         
         return pq.remove();
     }
     
-    private void makeCodingsFromTree(String encoding, HuffNode node)
+    private void makeCodingsFromTree(String[] encodings, String encoding, HuffNode node)
     {
         if (node != null)
         {
@@ -116,16 +106,17 @@ public class HuffProcessor
             }
             else
             {
-                makeCodingsFromTree(encoding + "0", node.myLeft);
-                makeCodingsFromTree(encoding + "1", node.myRight);
+                makeCodingsFromTree(encodings, encoding + "0", node.myLeft);
+                makeCodingsFromTree(encodings, encoding + "1", node.myRight);
             }
         }
     }
     
-    public void makeCodingsFromTree(HuffNode root)
+    public String[] makeCodingsFromTree(HuffNode root)
     {
-        encodings = new String[ALPH_SIZE + 1];
-        makeCodingsFromTree("", root);
+        String[] encodings = new String[ALPH_SIZE + 1];
+        makeCodingsFromTree(encodings, "", root);
+        return encodings;
     }
     
     public void writeHeader(HuffNode node, BitOutputStream out)
@@ -147,7 +138,7 @@ public class HuffProcessor
         }
     }
     
-    public void writeCompressedBits(BitInputStream in, BitOutputStream out)
+    public void writeCompressedBits(String[] encodings, BitInputStream in, BitOutputStream out)
     {
         in.reset();
         while (true)
@@ -155,6 +146,8 @@ public class HuffProcessor
             int val = in.readBits(BITS_PER_WORD);
             if (val == -1)
             {
+                out.writeBits(encodings[PSEUDO_EOF].length(),
+                        Integer.parseInt(encodings[PSEUDO_EOF], 2));
                 break;
             }
             else
