@@ -77,7 +77,7 @@ public class HuffProcessor {
 		out.close();
 	}
 	public HuffNode readTreeHeader(BitInputStream in) {
-		int bit = in.read(); 
+		int bit = in.readBits(BITS_PER_INT); 
 		if (bit== -1)
 		{
 			throw new HuffException ("invalid bit"); 
@@ -115,7 +115,7 @@ public class HuffProcessor {
 						break; 
 					}
 					else {
-						out.write(current.myValue);
+						out.writeBits(BITS_PER_WORD, current.myValue);
 						current= root; 
 					}
 				}
