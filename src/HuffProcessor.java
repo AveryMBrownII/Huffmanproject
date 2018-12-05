@@ -110,7 +110,9 @@ public class HuffProcessor {
 				else {
 					current= current.myRight; 
 				}
-				if (current != null && current.myRight== null && current.myLeft==null) {  //maybe need to fix 
+				if (current.myLeft==null && current.myRight==null)
+				//if (current != null && current.myRight== null && current.myLeft==null) // may need to fix 
+					{  
 					if (current.myValue== PSEUDO_EOF) {
 						break; 
 					}
